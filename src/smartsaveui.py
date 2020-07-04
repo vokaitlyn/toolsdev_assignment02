@@ -29,7 +29,7 @@ class SmartSaveUI(QtWidgets.QDialog):
         self.create_connections()
 
     def create_widgets(self):
-        self.title_lbl = QtWidgets.QLabel("Smart Save UI")
+        self.title_lbl = QtWidgets.QLabel("Smart Save")
         self.title_lbl.setStyleSheet("font: bold 20px")
         """Directory"""
         self.dir_lbl = QtWidgets.QLabel("Directory")
