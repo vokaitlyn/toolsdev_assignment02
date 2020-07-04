@@ -1,59 +1,55 @@
+# Kaitlyn Vo
+# ATCM 3311.0U1 - Assignment 02
+# 07/04/2020
+
 import logging
 
 import pymel.core as pmc
 from pymel.core.system import Path
-from pymel.core.system import versions
-
 
 log = logging.getLogger(__name__)
 
 
 class SceneFile(object):
-
     """Initialises attributes when class is instantiated"""
     def __init__(self, dir='', descriptor='main', version=1, ext="ma"):
-        #Delineates between new scene vs open scene with naming conventions
         if pmc.system.isModified():
-            self._dir = Path(dir)
+            self.dir = Path(dir)
             self.descriptor = descriptor
             self.version = version
             self.ext = ext
         else:
             temp_path = Path(pmc.system.sceneName())
             self.dir = temp_path.parent
-            file_name = temp_path.name
-            try:
-                self.descriptor = file_name.split("_v")[0]
-                file_version = file_name.split("_v")[1]
-                file_version2 = file_name.splt(".")[0]
-                self.version = int(file_version2)
-                self.ext = file_name.split(".")[1]
-            except IndexError:
-                self.descriptor = file_name.split("_")[0]
-                file_version = file_name.split("_")[1]
-                file_version2 = file_version.split(".")[0]
-                self.version = int(file_version2)
-                self.ext = file_version.split(".")[1]
 
-    
+            file_name = temp_path.name
+            file_part = file_name.split("_v")
+            if len(file_part) != 2:
+                raise RuntimeError("File name must contain _v")
+            self.descriptor = file_part[0]
+
+            version = file_part[1].split(".")[0]
+            self.version = int(version)
+
+            self.ext = file_part[1].split(".")[1]
+
     @property
     def dir(self):
         return self._dir
 
     @dir.setter
-    def dir(self,val):
+    def dir(self, val):
         self._dir = Path(val)
-
 
     """Return a scene file name"""
     def basename(self):
-        name_pattern = "{descriptor}_{version:03d}.{ext}"
+        name_pattern = "{descriptor}_v{version:03d}.{ext}"
         name = name_pattern.format(descriptor=self.descriptor,
-                                    version=self.version,
-                                    ext=self.ext)
+                                   version=self.version,
+                                   ext=self.ext)
         return name
 
-    """Retuns a path to scene file""" 
+    """Retuns a path to scene file"""
     def path(self):
         return Path(self.dir) / self.basename()
 
@@ -68,26 +64,35 @@ class SceneFile(object):
 
     """Increments the version and saves the scene file, incrementing from next largest number available."""
     def increment_and_save(self):
-        file_list = pmc.getFileList(folder=self.dir)
+        files_list = self.dir.listdir()
         scene_list = list()
-
         for file in files_list:
             file_path = Path(file)
             scene = file_path.name
-            scene_list.append(scene)
-
+            if self.is_scene_file(scene):
+                scene_list.append(scene)
         new_version = self.version
 
-        for scene in scene_list:
-            descriptor = scene.split("_v")[0]
-
-            if descriptor == self.descriptor:
-                version_name = scene.split("_v")[1].split(".")[0]
-                version_name2 = version_name.split(".")[0]
-                version = int(version_str)
-
-                if version > self.version:
-                    new_version = version
+        current_scenes = [x for x in scene_list if x.split("_v")[0] == self.descriptor]
+        for scene in current_scenes:
+            version_name = scene.split("_v")[1].split(".")[0]
+            version = int(version_name)
+            if version > self.version:
+                new_version = version
 
         self.version = new_version + 1
         self.save()
+
+    def is_scene_file(self, filename):
+        #flower_v003.ma
+        file_parts = filename.split("_v")
+        if len(file_parts) != 2:
+            return False
+        file_version = file_parts[1].split(".")
+        if len(file_version) != 2:
+            return False
+        if file_version[1] != "ma":
+            return False
+        if len(file_version[0]) != 3 or not file_version[0].isdigit():
+            return False
+        return True
