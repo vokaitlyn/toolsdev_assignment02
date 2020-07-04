@@ -84,7 +84,6 @@ class SceneFile(object):
         self.save()
 
     def is_scene_file(self, filename):
-        #flower_v003.ma
         file_parts = filename.split("_v")
         if len(file_parts) != 2:
             return False
